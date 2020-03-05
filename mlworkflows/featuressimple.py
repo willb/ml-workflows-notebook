@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
 from sklearn.base import TransformerMixin, BaseEstimator
+from util import get_param
 
 class SimpleSummaries(TransformerMixin, BaseEstimator):
     @staticmethod
@@ -10,7 +11,9 @@ class SimpleSummaries(TransformerMixin, BaseEstimator):
         """ returns a list of the column names """
         return ['no_punct', 'number_words', 'mean_wl', 'max_wl', 'min_wl', 'pc_10_wl', 'pc_90_wl', 'upper', 'stop_words']
                         
-    def __init__(self):
+    def __init__(self, lower_quantile=None, upper_quantile=None):
+        self.lower_quantile = lower_quantile or 0.1
+        self.upper_quantile = upper_quantile or 0.9
         pass
 
     def fit(self, X, y=None):
@@ -24,7 +27,6 @@ class SimpleSummaries(TransformerMixin, BaseEstimator):
         """
         takes in text and returns 'simple' summaries.
         """
-
         no_punct = self.strip_punct(str(row))
 
         words = no_punct[0].split()
@@ -38,8 +40,8 @@ class SimpleSummaries(TransformerMixin, BaseEstimator):
         max_wl = max(word_length)
         min_wl = min(word_length)
 
-        pc_90_wl = np.percentile(word_length, 90)
-        pc_10_wl = np.percentile(word_length, 10)
+        pc_90_wl = np.percentile(word_length, self.upper_quantile * 100)
+        pc_10_wl = np.percentile(word_length, self.lower_quantile * 100)
 
         upper = sum([self.caps(x) for x in words])
         stop_words = sum([self.isstopword(x) for x in words])
