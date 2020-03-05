@@ -1,15 +1,15 @@
 import re
+
 import numpy as np
 import pandas as pd
-from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
 from sklearn.base import TransformerMixin, BaseEstimator
-from util import get_param
+from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
 
 class SimpleSummaries(TransformerMixin, BaseEstimator):
     @staticmethod
     def columns():
         """ returns a list of the column names """
-        return ['no_punct', 'number_words', 'mean_wl', 'max_wl', 'min_wl', 'pc_10_wl', 'pc_90_wl', 'upper', 'stop_words']
+        return ['no_punct', 'number_words', 'mean_wl', 'max_wl', 'min_wl', 'pc_low_wl', 'pc_high_wl', 'upper', 'stop_words']
                         
     def __init__(self, lower_quantile=None, upper_quantile=None):
         self.lower_quantile = lower_quantile or 0.1
@@ -40,13 +40,13 @@ class SimpleSummaries(TransformerMixin, BaseEstimator):
         max_wl = max(word_length)
         min_wl = min(word_length)
 
-        pc_90_wl = np.percentile(word_length, self.upper_quantile * 100)
-        pc_10_wl = np.percentile(word_length, self.lower_quantile * 100)
+        pc_hi_wl = np.percentile(word_length, self.upper_quantile * 100)
+        pc_lo_wl = np.percentile(word_length, self.lower_quantile * 100)
 
         upper = sum([self.caps(x) for x in words])
         stop_words = sum([self.isstopword(x) for x in words])
 
-        return dict(zip(SimpleSummaries.columns(), [no_punct[1], number_words, mean_wl, max_wl, min_wl, pc_10_wl, pc_90_wl, upper, stop_words]))
+        return dict(zip(SimpleSummaries.columns(), [no_punct[1], number_words, mean_wl, max_wl, min_wl, pc_lo_wl, pc_hi_wl, upper, stop_words]))
 
     def strip_punct(self, text):
         """
