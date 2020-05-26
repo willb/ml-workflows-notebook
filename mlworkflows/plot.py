@@ -61,38 +61,6 @@ def plot_tsne(df, input_column, **kwargs):
     tsne_plot_data = pd.concat([sdf.reset_index(), pd.DataFrame(tsne_a, columns=["x", "y"])], axis=1)
 
     return plot_points(tsne_plot_data, **kwargs)    
-    
-def binary_confusion_matrix(actuals, predictions, labels = None, width = 215, height = 215):
-    activate()
-    from sklearn.metrics import confusion_matrix
-    
-    if labels is None:
-        from sklearn.utils.multiclass import unique_labels
-        labels = unique_labels(predictions, actuals)
-    
-    assert(len(labels) == 2)
-    
-    ccm = confusion_matrix(actuals, predictions, labels=labels)
-    ncm = ccm.astype('float') / ccm.sum(axis=1)[:, np.newaxis]
-    
-    def labelizer(labels):
-        def labelize(tup):
-            i, v = tup
-            return {'predicted' : labels[int(i / 2)], 'actual' : labels[i & 1], 'raw_count' : v[0], 'value' : v[1]}
-        return labelize
-
-    labelize = labelizer(labels)
-    
-    cmdf = pd.DataFrame([labelize(t) for t in enumerate(zip(ccm.ravel(), ncm.ravel()))])
-    c = alt.Chart(cmdf).mark_rect().encode(
-        x='predicted:O',
-        y='actual:O',
-        color='value:Q',
-        tooltip=["raw_count:Q"]
-    ).properties(width=width, height=height)
-
-    return (cmdf, c)
-
 
 def confusion_matrix(actuals, predictions, labels=None, width=215, height=215):
     activate()
