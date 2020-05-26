@@ -92,4 +92,36 @@ def binary_confusion_matrix(actuals, predictions, labels = None, width = 215, he
     ).properties(width=width, height=height)
 
     return (cmdf, c)
-    
+
+
+def confusion_matrix(actuals, predictions, labels=None, width=215, height=215):
+    activate()
+    from sklearn.metrics import confusion_matrix as sk_cm
+
+    if labels is None:
+        from sklearn.utils.multiclass import unique_labels
+        labels = unique_labels(predictions, actuals)
+
+    lc = len(labels)
+
+    ccm = sk_cm(actuals, predictions, labels=labels)
+    ncm = ccm.astype('float') / ccm.sum(axis=1)[:, np.newaxis]
+
+    def labelizer(labels):
+        def labelize(tup):
+            i, v = tup
+            return {'predicted': labels[int(i / lc)], 'actual': labels[i % lc], 'raw_count': v[0], 'value': v[1]}
+
+        return labelize
+
+    labelize = labelizer(labels)
+
+    cmdf = pd.DataFrame([labelize(t) for t in enumerate(zip(ccm.ravel(), ncm.ravel()))])
+    c = alt.Chart(cmdf).mark_rect().encode(
+        x='predicted:O',
+        y='actual:O',
+        color='value:Q',
+        tooltip=["raw_count:Q"]
+    ).properties(width=width, height=height)
+
+    return (cmdf, c)
